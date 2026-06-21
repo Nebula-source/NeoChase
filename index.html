@@ -235,6 +235,40 @@
   .hud-boost-track{height:6px;background:#11151f;border-radius:3px;overflow:hidden;border:1px solid var(--panel-line);}
   .hud-boost-fill{height:100%;background:var(--cyan);width:100%;}
 
+  /* ===== Ad placeholder slots — drop Advertica codes inside these divs ===== */
+  .ad-slot{
+    border:1px dashed rgba(0,246,255,0.22);
+    background:rgba(255,255,255,0.02);
+    display:flex;align-items:center;justify-content:center;
+    color:rgba(125,138,171,0.45);
+    font-size:8px;letter-spacing:1.5px;
+    overflow:hidden;pointer-events:none;
+    z-index:3;
+  }
+  .ad-start-corner{
+    position:fixed;width:120px;height:60px;z-index:20;
+  }
+  #ad-start-tl{top:10px;left:10px;}
+  #ad-start-tr{top:10px;right:10px;}
+  #ad-start-bl{bottom:10px;left:10px;}
+  #ad-start-br{bottom:10px;right:10px;}
+
+  #ad-game-top{
+    position:absolute;top:104px;left:50%;transform:translateX(-50%);
+    width:300px;max-width:80vw;height:50px;
+  }
+  #ad-game-center{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:250px;height:100px;opacity:0.55;
+  }
+  .ad-game-corner{
+    position:absolute;width:120px;height:90px;
+    display:none;
+  }
+  #ad-game-cl{top:170px;left:10px;}
+  #ad-game-cr{top:170px;right:10px;}
+  @media (pointer:fine){ .ad-game-corner{display:flex;} }
+
   #radarCanvas{
     position:absolute;bottom:18px;right:18px;
     width:130px;height:130px;border-radius:50%;
@@ -297,6 +331,10 @@
 
 <!-- START SCREEN -->
 <div id="screen-start" class="screen active">
+  <div class="ad-slot ad-start-corner" id="ad-start-tl"><!-- Advertica code --></div>
+  <div class="ad-slot ad-start-corner" id="ad-start-tr"><!-- Advertica code --></div>
+  <div class="ad-slot ad-start-corner" id="ad-start-bl"><!-- Advertica code --></div>
+  <div class="ad-slot ad-start-corner" id="ad-start-br"><!-- Advertica code --></div>
   <div class="start-card">
     <div class="title">NEO CHASE</div>
     <div class="subtitle">// OUTRUN THE GRID //</div>
@@ -356,6 +394,11 @@
       </div>
     </div>
   </div>
+
+  <div class="ad-slot" id="ad-game-top"><!-- Advertica code --></div>
+  <div class="ad-slot" id="ad-game-center"><!-- Advertica code --></div>
+  <div class="ad-slot ad-game-corner" id="ad-game-cl"><!-- Advertica code --></div>
+  <div class="ad-slot ad-game-corner" id="ad-game-cr"><!-- Advertica code --></div>
 
   <canvas id="radarCanvas" width="130" height="130"></canvas>
 
@@ -420,6 +463,9 @@ const BUILDING_DAMAGE_THRESHOLD = 140;
 const RAM_DAMAGE_THRESHOLD = 55;
 const MAX_PARTICLES = 160;
 const IMPACT_DAMAGE = 5;
+const RAM_HEAL_AMOUNT = 10;
+const TAP_HEAL_AMOUNT = 5;
+const TAP_SPEED_BOOST = 40;
 const BOOST_DURATION = 5;
 const BOOST_COOLDOWN = 20;
 const BOOST_SPEED_MULT = 2;
@@ -441,10 +487,10 @@ const CREDIT_POLICE_CRASH = 50;
 const CREDIT_CIVILIAN_HIT = 30;
 
 const DIFFICULTIES = {
-  easy:     { label:"Easy",     policeBase:2, policeMax:5,  spawnMin:2.2, spawnMax:3.4, pickups:true,  bonusGoal:10, bonusReward:15,  smartPolice:false, pickupDensity:4, civilianMax:12, civSpawnMin:0.6, civSpawnMax:1.2, heavyChance:0 },
-  medium:   { label:"Medium",   policeBase:2, policeMax:6,  spawnMin:1.6, spawnMax:2.6, pickups:true,  bonusGoal:10, bonusReward:15,  smartPolice:true,  pickupDensity:3, civilianMax:9,  civSpawnMin:1.0, civSpawnMax:1.8, heavyChance:0 },
-  hard:     { label:"Hard",     policeBase:3, policeMax:8,  spawnMin:1.1, spawnMax:2.0, pickups:true,  bonusGoal:10, bonusReward:15,  smartPolice:true,  pickupDensity:3, civilianMax:9,  civSpawnMin:1.0, civSpawnMax:1.8, heavyChance:0.3 },
-  hardcore: { label:"Hardcore", policeBase:4, policeMax:12, spawnMin:0.8, spawnMax:1.4, pickups:false, bonusGoal:20, bonusReward:100, smartPolice:true,  pickupDensity:0, civilianMax:9,  civSpawnMin:1.0, civSpawnMax:1.8, heavyChance:0.45 },
+  easy:     { label:"Easy",     policeBase:4, policeMax:9,  spawnMin:1.6, spawnMax:2.4, pickups:true,  bonusGoal:10, bonusReward:15,  smartPolice:false, pickupDensity:4, civilianMax:12, civSpawnMin:0.6, civSpawnMax:1.2, heavyChance:0 },
+  medium:   { label:"Medium",   policeBase:5, policeMax:12, spawnMin:1.1, spawnMax:1.8, pickups:true,  bonusGoal:10, bonusReward:15,  smartPolice:true,  pickupDensity:3, civilianMax:9,  civSpawnMin:1.0, civSpawnMax:1.8, heavyChance:0 },
+  hard:     { label:"Hard",     policeBase:7, policeMax:16, spawnMin:0.8, spawnMax:1.3, pickups:true,  bonusGoal:10, bonusReward:15,  smartPolice:true,  pickupDensity:3, civilianMax:9,  civSpawnMin:1.0, civSpawnMax:1.8, heavyChance:0.3 },
+  hardcore: { label:"Hardcore", policeBase:9, policeMax:22, spawnMin:0.6, spawnMax:1.0, pickups:false, bonusGoal:20, bonusReward:100, smartPolice:true,  pickupDensity:0, civilianMax:9,  civSpawnMin:1.0, civSpawnMax:1.8, heavyChance:0 },
 };
 
 const CIVILIAN_TYPES = [
@@ -727,16 +773,16 @@ document.getElementById("btnRetry").addEventListener("click", ()=>{
 const keys = { up:false, down:false, left:false, right:false };
 window.addEventListener("keydown", e=>{
   switch(e.key){
-    case "ArrowUp": case "w": case "W": keys.up=true; break;
+    case "ArrowUp": case "w": case "W": case " ": e.preventDefault(); keys.up=true; break;
     case "ArrowDown": case "s": case "S": keys.down=true; break;
     case "ArrowLeft": case "a": case "A": keys.left=true; break;
     case "ArrowRight": case "d": case "D": keys.right=true; break;
-    case " ": e.preventDefault(); activateBoost(); break;
+    case "Shift": activateBoost(); break;
   }
 });
 window.addEventListener("keyup", e=>{
   switch(e.key){
-    case "ArrowUp": case "w": case "W": keys.up=false; break;
+    case "ArrowUp": case "w": case "W": case " ": keys.up=false; break;
     case "ArrowDown": case "s": case "S": keys.down=false; break;
     case "ArrowLeft": case "a": case "A": keys.left=false; break;
     case "ArrowRight": case "d": case "D": keys.right=false; break;
@@ -1053,7 +1099,12 @@ function desiredPoliceCount(elapsed, diff){
   return Math.min(diff.policeBase + Math.floor(elapsed/12), diff.policeMax);
 }
 function spawnPoliceUnit(runState){
-  const ang = Math.random()*Math.PI*2;
+  const p = runState.player;
+  const travelAngle = p.speed >= 0 ? p.angle : p.angle + Math.PI;
+  const coneWidth = Math.PI*0.55;
+  const ang = Math.random() < 0.75
+    ? travelAngle + (Math.random()-0.5)*coneWidth
+    : Math.random()*Math.PI*2;
   const dist = 650 + Math.random()*250;
   const x = runState.player.x + Math.cos(ang)*dist;
   const y = runState.player.y + Math.sin(ang)*dist;
@@ -1270,7 +1321,7 @@ function update(dt){
     }
   }
 
-  // --- civilians vs player / police: light kinetic bounce, no damage ---
+  // --- civilians vs player / police: light kinetic bounce, no destruction ---
   const movers = [p, ...r.police];
   for(let i=0;i<r.civilians.length;i++){
     const c = r.civilians[i];
@@ -1290,12 +1341,16 @@ function update(dt){
           state.credits += CREDIT_CIVILIAN_HIT;
           c.hitCooldown = 1.2;
           spawnParticles(r, c.x, c.y, 10, "#ffd23b");
+          p.health = clamp(p.health + TAP_HEAL_AMOUNT, 0, p.maxHealth);
+          const dir = p.speed >= 0 ? 1 : -1;
+          p.speed = clamp(p.speed + dir*TAP_SPEED_BOOST, -topSpeed, topSpeed);
         }
       }
     }
   }
 
-  // --- player vs police: kinetic ram — real impacts, damage on both sides ---
+  // --- player vs police: kinetic ram — whoever suffers the hit loses HP;
+  //     the player gets a small heal + speed kick when they're the one ramming ---
   for(let i=0;i<r.police.length;i++){
     const u = r.police[i];
     const res = resolveCircleCircle(p.x,p.y,PLAYER_RADIUS,u.x,u.y,u.radius);
@@ -1317,19 +1372,23 @@ function update(dt){
       const pClosing = pvx*res.nx + pvy*res.ny;
       const uClosing = -(uvx*res.nx + uvy*res.ny);
       if(pClosing >= uClosing){
-        // player is ramming -> police is the one who suffers
+        // player is ramming -> police suffers, player gets a small reward
         u.health = clamp(u.health - IMPACT_DAMAGE, 0, u.maxHealth);
         addDamageMark(u, contactX, contactY);
         r.shake = Math.min(18, r.shake+5);
+        p.health = clamp(p.health + TAP_HEAL_AMOUNT, 0, p.maxHealth);
+        const dir = p.speed >= 0 ? 1 : -1;
+        p.speed = clamp(p.speed + dir*TAP_SPEED_BOOST, -topSpeed, topSpeed);
+        u.speed *= 0.55;
       } else if(!r.boostActive){
         // police is ramming -> player is the one who suffers (unless invincible)
         p.health = clamp(p.health - IMPACT_DAMAGE, 0, p.maxHealth);
         addDamageMark(p, contactX, contactY);
         r.combo = 1;
         r.shake = Math.min(18, r.shake+8);
+        p.speed *= 0.4;
+        u.speed *= 0.55;
       }
-      if(!r.boostActive) p.speed *= 0.4;
-      u.speed *= 0.55;
       if(p.health <= 0){ triggerBust(); return; }
     }
   }
@@ -1500,7 +1559,7 @@ const btnBoostEl = document.getElementById("btnBoost");
 function render(){
   const r = run;
   const camX = r.player.x, camY = r.player.y;
-  const dayFactor = dayFactorAt(r.elapsed);
+  const dayFactor = 1; // always daytime, as requested
   const bgColor = lerpRgbStr("#161b28","#c7cdd6",dayFactor);
   const gridColor = lerpRgbaStr(GRID_NIGHT, GRID_DAY, dayFactor);
 
